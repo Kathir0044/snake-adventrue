@@ -10,12 +10,15 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 pygame.init()
 pygame.mixer.init()
+pygame.init()
 
-WIDTH = 600
-HEIGHT = 600
-BLOCK = 30
+info = pygame.display.Info()
+WIDTH = info.current_w
+HEIGHT = info.current_h
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+BLOCK = 30   # ❗ fixed size (simple & stable)
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
 pygame.display.set_caption("Snake Game")
 
 clock = pygame.time.Clock()
@@ -30,14 +33,28 @@ def loading_screen():
 
     start_time = pygame.time.get_ticks()
 
+    font = pygame.font.SysFont(None, 70)
+
     while True:
 
-        screen.blit(loading_img,(0,0))
+        # background
+        screen.blit(loading_img, (0, 0))
 
-        draw_3d_text("LOADING...",60,200,260)
+        # 🔤 TEXT CREATE
+        text = "LOADING..."
+        shadow = font.render(text, True, (120, 100, 0))
+        main = font.render(text, True, (255, 255, 150))
+
+        # 📍 CENTER POSITION
+        text_rect = main.get_rect(center=(WIDTH // 5, HEIGHT // 2))
+
+        # shadow + main
+        screen.blit(shadow, (text_rect.x + 3, text_rect.y + 3))
+        screen.blit(main, text_rect)
 
         pygame.display.update()
 
+        # ⏱️ 2 seconds wait
         if pygame.time.get_ticks() - start_time > 2000:
             break
 
@@ -221,12 +238,12 @@ def start_menu():
 # ----------------
 
 
-left_btn = pygame.Rect(30,520,50,50)
-right_btn = pygame.Rect(90,520,50,50)
-up_btn = pygame.Rect(60,470,50,50)
-down_btn = pygame.Rect(60,570,50,50)
+left_btn = pygame.Rect(90,820,70,50)
+right_btn = pygame.Rect(200,820,70,50)
+up_btn = pygame.Rect(150,745,70,50)
+down_btn = pygame.Rect(150,890,70,50)
 
-pause_btn = pygame.Rect(520,520,50,50)
+pause_btn = pygame.Rect(1200,820,70,50)
 
 exit_btn = pygame.Rect(560,10,30,30)
 
@@ -332,7 +349,10 @@ def eat():
 
     global frog,score,speed
 
-    if snake[0] == frog:
+    head_rect = pygame.Rect(snake[0][0], snake[0][1], BLOCK, BLOCK)
+    frog_rect = pygame.Rect(frog[0], frog[1], BLOCK, BLOCK)
+
+    if head_rect.colliderect(frog_rect):
 
         eat_sound.play()
         score += 1
@@ -380,7 +400,7 @@ def draw_score():
     screen.blit(high,(380,10))
 
     # EXIT BUTTON
-    exit_btn = pygame.Rect(560, 10, 30, 30)
+    exit_btn = pygame.Rect(960, 10, 30, 30)
 
 # ----------------
 # MAIN LOOP
@@ -441,31 +461,44 @@ def main():
 
         # ❌ EXIT BUTTON
         pygame.draw.rect(screen, (200, 0, 0), exit_btn)
-        pygame.draw.line(screen, (255,255,255), (562,12), (588,38), 3)
-        pygame.draw.line(screen, (255,255,255), (588,12), (562,38), 3)
+        pygame.draw.line(screen, (255,255,255), (562,12), (588,38), 6)
+        pygame.draw.line(screen, (255,255,255), (588,12), (562,38), 6)
 
         # 🎮 CONTROL BUTTONS
-        pygame.draw.rect(screen, (0,0,0), left_btn, border_radius=8)
-        pygame.draw.rect(screen, (0,0,0), right_btn, border_radius=8)
-        pygame.draw.rect(screen, (0,0,0), up_btn, border_radius=8)
-        pygame.draw.rect(screen, (0,0,0), down_btn, border_radius=8)
-        pygame.draw.rect(screen, (0,0,0), pause_btn, border_radius=8)
+    # DRAW CONTROL BUTTONS
 
+        # 🌫️ Create transparent surface for buttons
+        btn_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+
+        # 🎮 Draw buttons (WHITE + ALPHA)
+        pygame.draw.rect(btn_surface, (255, 255, 255, 80), left_btn)
+        pygame.draw.rect(btn_surface, (255, 255, 255, 80), right_btn)
+        pygame.draw.rect(btn_surface, (255, 255, 255, 80), up_btn)
+        pygame.draw.rect(btn_surface, (255, 255, 255, 80), down_btn)
+        pygame.draw.rect(btn_surface, (255, 255, 255, 80), pause_btn)
+
+        # ✨ ADD BORDERS (new)
+        pygame.draw.rect(btn_surface, (255, 255, 255, 180), left_btn, 3)
+        pygame.draw.rect(btn_surface, (255, 255, 255, 160), right_btn, 3)
+        pygame.draw.rect(btn_surface, (255, 255, 255, 160), up_btn, 3)
+        pygame.draw.rect(btn_surface, (255, 255, 255, 160), down_btn, 3)
+        pygame.draw.rect(btn_surface, (255, 255, 255, 160), pause_btn, 3)
+
+        # 👉 Blit to main screen
+        screen.blit(btn_surface, (0, 0))
+
+        # 🔤 TEXT (same as yours)
         font = pygame.font.SysFont(None, 40)
 
-        def draw_text_center(text, rect):
-            txt = font.render(text, True, (255,255,255))
-            txt_rect = txt.get_rect(center=rect.center)
-            screen.blit(txt, txt_rect)
-
-        draw_text_center("<", left_btn)
-        draw_text_center(">", right_btn)
-        draw_text_center("^", up_btn)
-        draw_text_center("v", down_btn)
-        draw_text_center("II", pause_btn)
-
+        screen.blit(font.render("<", True, (255, 255, 255)), (100, 830))
+        screen.blit(font.render(">", True, (255, 255, 255)), (240, 830))
+        screen.blit(font.render("^", True, (255, 255, 255)), (175, 750))
+        screen.blit(font.render("v", True, (255, 255, 255)), (175, 910))
+        screen.blit(font.render("II", True, (255, 255, 255)), (1230, 830))
         pygame.display.update()
+
         clock.tick(speed)
+
 
 
 if __name__ == "__main__":
